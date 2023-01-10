@@ -1,0 +1,6 @@
+
+img/intro.png
+data/coco/coco_label_embedding.pth
+data/entities.txt
+data/README.md
+data/vg/vg_labels.pkl
