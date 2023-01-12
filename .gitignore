@@ -1,4 +1,5 @@
-
+__pycache__
+.vector_cache
 img/intro.png
 data/coco/coco_label_embedding.pth
 data/entities.txt
