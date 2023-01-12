@@ -127,17 +127,21 @@ def main(args, train_rate=0.9):
     if args.random:
         args.name += '_random'
 
+    args.save_dir = args.save_dir + '/' + args.name + '/'
+    if not os.path.exists(args.save_dir):
+        os.mkdir(args.save_dir)
+
     optimizer = torch.optim.Adam(parameters, lr=1e-4)
     scheduler = ReduceLROnPlateau(optimizer, verbose=True)
 
     if args.refer == 'vg':
-        dataset = VisualGenome(root_dir=args.data_dir, transform=data_transforms['val'])
+        dataset = VisualGenome(root_dir='data', transform=data_transforms['val'])
         datasets = {}
         train_size = int(train_rate * len(dataset))
         test_size = len(dataset) - train_size
         torch.manual_seed(0)
         datasets['train'], datasets['val'] = random_split(dataset, [train_size, test_size])
-        label_index_file = os.path.join(args.data_dir, "vg_labels.pkl")
+        label_index_file = os.path.join('./data/vg', "vg_labels.pkl")
         with open(label_index_file, 'rb') as f:
             labels = pickle.load(f)
         label_index = []
