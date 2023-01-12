@@ -97,7 +97,7 @@ class VisualGenome(Dataset):
         return img, torch.stack(targets), torch.stack(masks)
 
     def _load_obj(self):
-        dataFile = os.path.join(self._root_dir, 'vg/vg_objects.json')
+        dataFile = os.path.join(self._root_dir, 'vg/objects.json')
         with open(dataFile) as f:
             data = json.load(f)
         return data
