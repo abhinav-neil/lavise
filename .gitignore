@@ -21,3 +21,4 @@ data/pycocotools/_mask.pyx
 data/pycocotools/coco.py
 data/pycocotools/cocoeval.py
 data/pycocotools/mask.py
+*.png
