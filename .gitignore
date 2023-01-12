@@ -6,3 +6,10 @@ data/README.md
 data/vg/vg_labels.pkl
 *.vsidx
 .vs/FACT-AI-group18/FileContentIndex/read.lock
+*.txt
+*.pt
+*.zip
+*.pyc
+*.1
+cocoapi-master/.travis.yml
+*.cpp
