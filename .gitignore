@@ -22,3 +22,4 @@ data/pycocotools/coco.py
 data/pycocotools/cocoeval.py
 data/pycocotools/mask.py
 *.png
+outputs/vsf_vg_resnet50_layer4_0.1/valid_vsf_vg_resnet50_layer4_0.1.txt
