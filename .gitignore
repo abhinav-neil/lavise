@@ -23,3 +23,8 @@ data/pycocotools/cocoeval.py
 data/pycocotools/mask.py
 *.png
 outputs/vsf_vg_resnet50_layer4_0.1/valid_vsf_vg_resnet50_layer4_0.1.txt
+.vs/FACT-AI-group18/v17/workspaceFileList.bin
+outputs/teehee/valid_teehee.txt
+outputs/test/ckpt_test.pth.tar
+outputs/test/valid_test.txt
+outputs/vsf_coco_resnet50_layer4_0.1/valid_vsf_coco_resnet50_layer4_0.1.txt
