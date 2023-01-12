@@ -223,10 +223,7 @@ if __name__ == "__main__":
     parser.add_argument('--name', type=str, default='', help='experiment name')
     parser.add_argument('--anno-rate', type=float, default=0.1, help='fraction of concepts used for supervision')
     parser.add_argument('--margin', type=float, default=1., help='hyperparameter for margin ranking loss')
-
-    parser.add_argument('--model_checkpoint', default=None, help='blublublabla')
-    parser.add_argument('--target_layer', type=str, default='layer4', help='target layer')
-    parser.add_argument('--classifier_name', type=str, default='fc', help='classifier name')
+    parser.add_argument('--classifier_name', type=str, default='fc', help='name of classifier layer')
     args = parser.parse_args()
     print(args)
 
