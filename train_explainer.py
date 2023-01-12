@@ -21,7 +21,8 @@ def train_one_epoch(epoch, model, loss_fn, optimizer, train_loader, embeddings, 
     model.apply(set_bn_eval)
     for _, batch in enumerate(train_loader):
         batch_index += 1
-        print('batch nr {}.'.format(batch_index))
+        # for if you want to know it didn't crash between long ass epochs
+        # print('batch nr {}.'.format(batch_index))
         data, target, mask = batch[0].cuda(), batch[1].squeeze(0).cuda(), batch[2].squeeze(0).cuda()
         predict = data.clone()
         for name, module in model._modules.items():
@@ -152,6 +153,7 @@ def main(args, train_rate=0.9):
         train_label_index = np.random.choice(range(len(label_index)), int(len(label_index) * args.anno_rate))
         word_embeddings_vec = word_embedding.vectors[label_index].T.cuda()
     elif args.refer == 'coco':
+        # if you wanna take a subset of data
         #datasets = {'val': MyCocoSegmentation(root='./data/coco/val2017',
         #                                      annFile='./data/coco/annotations/instances_val2017.json',
         #                                      transform=data_transforms['val'],
