@@ -66,7 +66,7 @@ class VisualGenome(Dataset):
         return len(self._samples)
 
     def __getitem__(self, idx):
-        path = 'data/vg/VG_100K/%d.jpg' % self._samples[idx]['image_id']
+        path = 'vg/VG_100K/%d.jpg' % self._samples[idx]['image_id']
         path = os.path.join(self._root_dir, path)
 
         ori_img = Image.open(path).convert('RGB')
