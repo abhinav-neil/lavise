@@ -14,3 +14,9 @@ data/vg/vg_labels.pkl
 cocoapi-master/.travis.yml
 *.cpp
 data/vg/objects.json
+.vs/FACT-AI-group18/v17/.wsuo
+*.bin
+*.json
+*.sqlite
+*.png
+*.jpg
