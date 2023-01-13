@@ -13,3 +13,4 @@ data/vg/vg_labels.pkl
 *.1
 cocoapi-master/.travis.yml
 *.cpp
+data/vg/objects.json
