@@ -97,7 +97,7 @@ class VisualGenome(Dataset):
         return img, torch.stack(targets), torch.stack(masks)
 
     def _load_obj(self):
-        dataFile = os.path.join(self._root_dir, 'vg/vg_objects.json')
+        dataFile = os.path.join(self._root_dir, 'vg/objects.json')
         with open(dataFile) as f:
             data = json.load(f)
         return data
@@ -146,11 +146,15 @@ class MyCocoDetection(CocoDetection):
 
 
 class MyCocoSegmentation(CocoDetection):
-    def __init__(self, root, annFile, transform=None, target_transform=None, transforms=None):
+    def __init__(self, root, annFile, transform=None, target_transform=None, transforms=None, subset=None):
         super(CocoDetection, self).__init__(root, transforms, transform, target_transform)
         from pycocotools.coco import COCO
         self.coco = COCO(annFile)
-        self.ids = list(sorted(self.coco.anns.keys()))
+        ids = list(sorted(self.coco.anns.keys()))
+        if subset:
+            self.ids = ids[:subset]
+        else:
+            self.ids = ids
         self.dim = 7
 
     def __getitem__(self, index):

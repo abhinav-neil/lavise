@@ -13,7 +13,7 @@ def train_one_epoch(epoch, model, loss_fn, optimizer, train_loader, embeddings, 
                     train_label_idx, k=5):
     print("\nEpoch {} starting.".format(epoch))
     epoch_loss = 0.0
-    batch_index = 0
+    batch_index = 0.0
     num_batch = len(train_loader)
     correct = 0.0
     top_k_correct = 0.0
@@ -21,11 +21,8 @@ def train_one_epoch(epoch, model, loss_fn, optimizer, train_loader, embeddings, 
     model.apply(set_bn_eval)
     for _, batch in enumerate(train_loader):
         batch_index += 1
-<<<<<<< Updated upstream
-=======
         # for if you want to know it didn't crash between long ass epochs
-        print('batch nr {}.'.format(batch_index))
->>>>>>> Stashed changes
+        # print('batch nr {}.'.format(batch_index))
         data, target, mask = batch[0].cuda(), batch[1].squeeze(0).cuda(), batch[2].squeeze(0).cuda()
         predict = data.clone()
         for name, module in model._modules.items():
@@ -52,8 +49,8 @@ def train_one_epoch(epoch, model, loss_fn, optimizer, train_loader, embeddings, 
             loss.backward()
             optimizer.step()
 
-        if batch_index % 1 == 0:
-            train_log = 'Epoch {:2d}\tLoss: {:.6f}\tTrain: [{:4d}/{:4d} ({:.0f}%)]'.format(
+        if batch_index % 10 == 0:
+            train_log = 'Epoch {:2f}\tLoss: {:.6f}\tTrain: [{:4f}/{:4f} ({:.0f}%)]'.format(
                 epoch, loss.cpu().item(),
                 batch_index, num_batch,
                 100. * batch_index / num_batch)
@@ -65,7 +62,7 @@ def train_one_epoch(epoch, model, loss_fn, optimizer, train_loader, embeddings, 
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()
             }, os.path.join(output_path,
-                            'ckpt_%s_tmp.pth.tar' % experiment_name))
+                            'ckpt_tmp.pth.tar'))
 
         epoch_loss += loss.data.detach().item()
         torch.cuda.empty_cache()
@@ -132,17 +129,21 @@ def main(args, train_rate=0.9):
     if args.random:
         args.name += '_random'
 
+    args.save_dir = args.save_dir + '/' + args.name + '/'
+    if not os.path.exists(args.save_dir):
+        os.mkdir(args.save_dir)
+
     optimizer = torch.optim.Adam(parameters, lr=1e-4)
     scheduler = ReduceLROnPlateau(optimizer, verbose=True)
 
     if args.refer == 'vg':
-        dataset = VisualGenome(root_dir=args.data_dir, transform=data_transforms['val'])
+        dataset = VisualGenome(root_dir='data', transform=data_transforms['val'])
         datasets = {}
         train_size = int(train_rate * len(dataset))
         test_size = len(dataset) - train_size
         torch.manual_seed(0)
         datasets['train'], datasets['val'] = random_split(dataset, [train_size, test_size])
-        label_index_file = os.path.join(args.data_dir, "vg_labels.pkl")
+        label_index_file = os.path.join('./data/vg', "vg_labels.pkl")
         with open(label_index_file, 'rb') as f:
             labels = pickle.load(f)
         label_index = []
@@ -152,6 +153,15 @@ def main(args, train_rate=0.9):
         train_label_index = np.random.choice(range(len(label_index)), int(len(label_index) * args.anno_rate))
         word_embeddings_vec = word_embedding.vectors[label_index].T.cuda()
     elif args.refer == 'coco':
+        # if you wanna take a subset of data
+        #datasets = {'val': MyCocoSegmentation(root='./data/coco/val2017',
+        #                                      annFile='./data/coco/annotations/instances_val2017.json',
+        #                                      transform=data_transforms['val'],
+        #                                      subset=250),
+        #            'train': MyCocoSegmentation(root='./data/coco/train2017',
+        #                                        annFile='./data/coco/annotations/instances_train2017.json',
+        #                                        transform=data_transforms['train'],
+        #                                        subset=5000)}
         datasets = {'val': MyCocoSegmentation(root='./data/coco/val2017',
                                               annFile='./data/coco/annotations/instances_val2017.json',
                                               transform=data_transforms['val']),
@@ -212,9 +222,9 @@ def main(args, train_rate=0.9):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch-size', type=int, default=1)
+    parser.add_argument('--batch-size', type=int, default=516)
     parser.add_argument('--num-classes', type=int, default=2)
-    parser.add_argument('--num-workers', type=int, default=0)
+    parser.add_argument('--num-workers', type=int, default=16)
     parser.add_argument('--word-embedding-dim', type=int, default=300)
     parser.add_argument('--save-dir', type=str, default='./outputs')
     parser.add_argument('--save-every', type=int, default=1000)
@@ -228,10 +238,7 @@ if __name__ == "__main__":
     parser.add_argument('--name', type=str, default='', help='experiment name')
     parser.add_argument('--anno-rate', type=float, default=0.1, help='fraction of concepts used for supervision')
     parser.add_argument('--margin', type=float, default=1., help='hyperparameter for margin ranking loss')
-
-    parser.add_argument('--model_checkpoint', default=None, help='blublublabla')
-    parser.add_argument('--target_layer', type=str, default='layer4', help='target layer')
-    parser.add_argument('--classifier_name', type=str, default='fc', help='classifier name')
+    parser.add_argument('--classifier_name', type=str, default='fc', help='name of classifier layer')
     args = parser.parse_args()
     print(args)
 
