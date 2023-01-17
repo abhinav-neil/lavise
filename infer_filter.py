@@ -154,6 +154,9 @@ if __name__ == "__main__":
     parser.add_argument('--model-path', type=str, default='', help='path to load the target model')
     parser.add_argument('--thresh-path', type=str, help='path to save/load the thresholds')
     parser.add_argument('--max-path', type=str, help='path to save/load the max activations of all examples')
+    parser.add_argument('--random', type=bool, default=False, 
+                        help='Use randomly initialized models instead of pretrained feature extractors')
+
 
     # if filter activation projection is used
     parser.add_argument('--s', type=int, default=5,
