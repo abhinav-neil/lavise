@@ -8,12 +8,13 @@ from image_datasets import *
 from train_helpers import set_bn_eval, CSMRLoss
 from model_loader import setup_explainer
 
+from copy import deepcopy
 
 def train_one_epoch(epoch, model, loss_fn, optimizer, train_loader, embeddings, output_path, experiment_name,
                     train_label_idx, k=5):
     print("\nEpoch {} starting.".format(epoch))
     epoch_loss = 0.0
-    batch_index = 0.0
+    batch_index = 0
     num_batch = len(train_loader)
     correct = 0.0
     top_k_correct = 0.0
@@ -23,13 +24,13 @@ def train_one_epoch(epoch, model, loss_fn, optimizer, train_loader, embeddings, 
         batch_index += 1
         # for if you want to know it didn't crash between long ass epochs
         # print('batch nr {}.'.format(batch_index))
-        data, target, mask = batch[0].cuda(), batch[1].squeeze(0).cuda(), batch[2].squeeze(0).cuda()
-        predict = data.clone()
+        data, target, mask = torch.tensor(batch[0]).cuda(), torch.tensor(batch[1]).squeeze(0).cuda(), torch.tensor(batch[2]).squeeze(0).cuda()
+        predict = deepcopy(data)
         for name, module in model._modules.items():
-            if name is 'fc':
+            if name=='fc':
                 predict = torch.flatten(predict, 1)
             predict = module(predict)
-            if name is args.layer:
+            if name==args.layer:
                 if torch.sum(mask) > 0:
                     predict = predict * mask
                 else:
@@ -87,13 +88,13 @@ def validate(model, loss_fn, valid_loader, embeddings, train_label_idx, k=5):
             data, target, mask = batch[0].cuda(), batch[1].squeeze(0).cuda(), batch[2].squeeze(0).cuda()
             predict = data.clone()
             for name, module in model._modules.items():
-                if name is 'classifier' or name is 'fc':
+                if name=='classifier' or name=='fc':
                     if args.model == 'mobilenet':
                         predict = torch.mean(predict, dim=[2, 3])
                     else:
                         predict = torch.flatten(predict, 1)
                 predict = module(predict)
-                if name is args.layer:
+                if name==args.layer:
                     predict = predict * mask
             sorted_predict = torch.argsort(torch.mm(predict, embeddings) /
                                            torch.mm(torch.sqrt(torch.sum(predict ** 2, dim=1, keepdim=True)),
@@ -143,7 +144,7 @@ def main(args, train_rate=0.9):
         test_size = len(dataset) - train_size
         torch.manual_seed(0)
         datasets['train'], datasets['val'] = random_split(dataset, [train_size, test_size])
-        label_index_file = os.path.join('./data/vg', "vg_labels.pkl")
+        label_index_file = os.path.join(args.data_dir, "vg_labels.pkl")
         with open(label_index_file, 'rb') as f:
             labels = pickle.load(f)
         label_index = []
@@ -175,9 +176,16 @@ def main(args, train_rate=0.9):
         word_embeddings_vec = word_embedding.vectors[label_index].T.cuda()
     else:
         raise NotImplementedError
+    
+    # def collate_fn(data):
+    #     img, bbox = data
+    #     zipped = zip(img, bbox)
+    #     return list(zipped)
+    def collate_fn(batch):
+        return tuple(zip(*batch))
 
     dataloaders = {x: torch.utils.data.DataLoader(datasets[x], batch_size=args.batch_size,
-                                                  shuffle=True, num_workers=args.num_workers)
+                                                  shuffle=True, num_workers=args.num_workers, collate_fn=collate_fn)
                    for x in ['train', 'val']}
 
     loss_fn = CSMRLoss(margin=args.margin)
@@ -222,7 +230,7 @@ def main(args, train_rate=0.9):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch-size', type=int, default=516)
+    parser.add_argument('--batch-size', type=int, default=512)
     parser.add_argument('--num-classes', type=int, default=2)
     parser.add_argument('--num-workers', type=int, default=16)
     parser.add_argument('--word-embedding-dim', type=int, default=300)
