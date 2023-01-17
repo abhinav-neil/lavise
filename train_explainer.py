@@ -144,7 +144,7 @@ def main(args, train_rate=0.9):
         test_size = len(dataset) - train_size
         torch.manual_seed(0)
         datasets['train'], datasets['val'] = random_split(dataset, [train_size, test_size])
-        label_index_file = os.path.join(args.data_dir, "vg_labels.pkl")
+        label_index_file = os.path.join('./data/vg', "vg_labels.pkl")
         with open(label_index_file, 'rb') as f:
             labels = pickle.load(f)
         label_index = []
@@ -243,7 +243,7 @@ if __name__ == "__main__":
     parser.add_argument('--model', type=str, default='resnet50', help='target network')
     parser.add_argument('--refer', type=str, default='vg', choices=('vg', 'coco'), help='reference dataset')
     parser.add_argument('--pretrain', type=str, default=None, help='path to the pretrained model')
-    parser.add_argument('--name', type=str, default='random_test', help='experiment name')
+    parser.add_argument('--name', type=str, default='', help='experiment name')
     parser.add_argument('--anno-rate', type=float, default=0.1, help='fraction of concepts used for supervision')
     parser.add_argument('--margin', type=float, default=1., help='hyperparameter for margin ranking loss')
     parser.add_argument('--classifier_name', type=str, default='fc', help='name of classifier layer')
