@@ -28,3 +28,6 @@ outputs/teehee/valid_teehee.txt
 outputs/test/ckpt_test.pth.tar
 outputs/test/valid_test.txt
 outputs/vsf_coco_resnet50_layer4_0.1/valid_vsf_coco_resnet50_layer4_0.1.txt
+outputs/vsf_coco_resnet50_layer4_0.1/ckpt_tmp.pth.tar
+outputs/vsf_coco_resnet50_layer4_0.1/ckpt_vsf_coco_resnet50_layer4_0.1.pth.tar
+salo.job
