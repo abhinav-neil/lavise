@@ -23,8 +23,8 @@ def train_one_epoch(epoch, model, loss_fn, optimizer, train_loader, embeddings, 
     for _, batch in enumerate(train_loader):
         batch_index += 1
         # for if you want to know it didn't crash between long ass epochs
-        # print('batch nr {}.'.format(batch_index))
-        data, target, mask = torch.tensor(batch[0]).cuda(), torch.tensor(batch[1]).squeeze(0).cuda(), torch.tensor(batch[2]).squeeze(0).cuda()
+        print('batch nr {}.'.format(batch_index))
+        data, target, mask = torch.stack(batch[0]).cuda(), torch.stack(batch[1]).squeeze(0).cuda(), torch.stack(batch[2]).squeeze(0).cuda()
         predict = deepcopy(data)
         for name, module in model._modules.items():
             if name=='fc':
@@ -144,7 +144,7 @@ def main(args, train_rate=0.9):
         test_size = len(dataset) - train_size
         torch.manual_seed(0)
         datasets['train'], datasets['val'] = random_split(dataset, [train_size, test_size])
-        label_index_file = os.path.join('./data/vg', "vg_labels.pkl")
+        label_index_file = os.path.join(args.data_dir, "vg_labels.pkl")
         with open(label_index_file, 'rb') as f:
             labels = pickle.load(f)
         label_index = []
