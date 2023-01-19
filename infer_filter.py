@@ -88,11 +88,13 @@ def inference(args):
             weight = np.amax(c)
             if weight <= 0.:
                 continue
-            print(data_)
-            print(type(data_.detach().cpu().numpy()))
-            print(data_[0])
+
             # interpret the explainer's output with the specified method
-            predict = explain(model, data_, method, activation, c, xf, threshold)
+
+            # these goobers really gave the input wrong to their own function 
+            # fun fact, it took way too long for me to figure this out
+            # predict = explain(model, data_, method, activation, c, xf, threshold)
+            predict = explain(method, model, data_, activation, c, xf, threshold)
             predict_score = torch.mm(predict, embeddings) / \
                             torch.mm(torch.sqrt(torch.sum(predict ** 2, dim=1, keepdim=True)),
                                      torch.sqrt(torch.sum(embeddings ** 2, dim=0, keepdim=True)))
@@ -124,6 +126,7 @@ def inference(args):
 
 
 def explain(method, model, data_, activation, c, xf, threshold):
+    # this outside and remember to have the right order of inputs klojo
     img = data_.detach().cpu().numpy().squeeze()
     img = np.transpose(img, (1, 2, 0))
     if method == 'original':
@@ -154,6 +157,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--layer', type=str, default='layer4', help='target layer')
     #parser.add_argument('--f', type=int, help='index of the target filter')
+    # just chose a random default
     parser.add_argument('--f', type=int, default=50, help='list of index of the target filters')
     parser.add_argument('--method', type=str, default='projection',
                         choices=('original', 'image', 'activation', 'projection'),
