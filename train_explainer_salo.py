@@ -86,7 +86,7 @@ def validate(model, loss_fn, valid_loader, embeddings, train_label_idx, k=5):
     for _, batch in enumerate(valid_loader):
         with torch.no_grad():
             data, target, mask = batch[0].cuda(), batch[1].squeeze(0).cuda(), batch[2].squeeze(0).cuda()
-            predict = data.clone()
+            predict = deepcopy(data)
             for name, module in model._modules.items():
                 if name=='classifier' or name=='fc':
                     if args.model == 'mobilenet':
@@ -105,7 +105,7 @@ def validate(model, loss_fn, valid_loader, embeddings, train_label_idx, k=5):
                 correct += target[i, pred[0]].detach().item()
                 top_k_correct += (torch.sum(target[i, pred]) > 0).detach().item()
 
-            valid_loss += loss_fn(predict, target[:, train_label_idx], embeddings, train_label_idx).data.detach().item()
+            valid_loss += loss_fn(predict, target, embeddings, train_label_idx).data.detach().item()
         torch.cuda.empty_cache()
         # break
 
