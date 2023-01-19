@@ -60,5 +60,3 @@ def setup_explainer(settings, hook_fn=None, random_feature=False):
     model.cuda()
     return model
 
-# comment
-
