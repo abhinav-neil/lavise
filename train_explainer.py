@@ -243,7 +243,7 @@ if __name__ == "__main__":
     parser.add_argument('--model', type=str, default='resnet50', help='target network')
     parser.add_argument('--refer', type=str, default='vg', choices=('vg', 'coco'), help='reference dataset')
     parser.add_argument('--pretrain', type=str, default=None, help='path to the pretrained model')
-    parser.add_argument('--name', type=str, default='', help='experiment name')
+    parser.add_argument('--name', type=str, default='random_test', help='experiment name')
     parser.add_argument('--anno-rate', type=float, default=0.1, help='fraction of concepts used for supervision')
     parser.add_argument('--margin', type=float, default=1., help='hyperparameter for margin ranking loss')
     parser.add_argument('--classifier_name', type=str, default='fc', help='name of classifier layer')
