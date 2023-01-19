@@ -85,7 +85,7 @@ def validate(model, loss_fn, valid_loader, embeddings, train_label_idx, k=5):
     top_k_correct = 0.0
     for _, batch in enumerate(valid_loader):
         with torch.no_grad():
-            data, target, mask = batch[0].cuda(), batch[1].squeeze(0).cuda(), batch[2].squeeze(0).cuda()
+            data, target, mask = torch.stack(batch[0]).cuda(), torch.stack(batch[1]).squeeze(0).cuda(), torch.stack(batch[2]).squeeze(0).cuda()
             predict = deepcopy(data)
             for name, module in model._modules.items():
                 if name=='classifier' or name=='fc':
