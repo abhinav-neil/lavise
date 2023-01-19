@@ -28,6 +28,10 @@ def inference(args):
 
     # load the target model with a trained explainer
     model = setup_explainer(args, random_feature=args.random)
+    if len(args.model_path) < 1:
+        args.model_path = 'outputs/' + args.name + '/ckpt_tmp.pth.tar'
+    if len(args.max_path) < 1:
+        args.max_path = 'outputs/' + args.name + '/act_max_{}.pt'.format(args.method)
     ckpt = torch.load(args.model_path)
     state_dict = ckpt['state_dict']
     model.load_state_dict(state_dict)
@@ -35,8 +39,8 @@ def inference(args):
     model.eval()
 
     # get the max activation of each examples on the target filter
-    max_activations = np.zeros(len(dataset))
-    if not args.max_path:
+    #max_activations = np.zeros(len(dataset))
+    if not os.path.exists(args.max_path):
         print('extracting max activations...')
         for k, batch in enumerate(dataloader):
             img = batch[0].cuda()
@@ -46,7 +50,10 @@ def inference(args):
                 if name is args.layer:
                     break
             x = x.cpu().detach().numpy()
-            max_activations[k] = np.max(x, axis=(-1, -2))[f]
+            if k == 0:
+                max_activations = np.zeros((x.shape[1],len(dataset)))
+            max_activations[:,k] = np.max(x.squeeze(0), axis=(-1, -2))
+            # max_activations[k] = np.max(x, axis=(-1, -2))[f]
         torch.save(max_activations, args.max_path)
         print('activations of filters saved!')
     max_activations = torch.load(args.max_path)
@@ -55,7 +62,8 @@ def inference(args):
     sorted_samples = np.argsort(-max_activations, axis=1)
 
     # load the activation threshold
-    threshold = np.load(args.thresh_path)[f]
+    #threshold = np.load(args.thresh_path)[f]
+    threshold = args.mask_threshold
 
     with torch.no_grad():
         start = time.time()
@@ -80,7 +88,9 @@ def inference(args):
             weight = np.amax(c)
             if weight <= 0.:
                 continue
-
+            print(data_)
+            print(type(data_.detach().cpu().numpy()))
+            print(data_[0])
             # interpret the explainer's output with the specified method
             predict = explain(model, data_, method, activation, c, xf, threshold)
             predict_score = torch.mm(predict, embeddings) / \
@@ -114,7 +124,7 @@ def inference(args):
 
 
 def explain(method, model, data_, activation, c, xf, threshold):
-    img = data_.cpu().detach().numpy().squeeze()
+    img = data_.detach().cpu().numpy().squeeze()
     img = np.transpose(img, (1, 2, 0))
     if method == 'original':
         # original image
@@ -143,7 +153,8 @@ def explain(method, model, data_, activation, c, xf, threshold):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--layer', type=str, default='layer4', help='target layer')
-    parser.add_argument('--f', type=int, help='index of the target filter')
+    #parser.add_argument('--f', type=int, help='index of the target filter')
+    parser.add_argument('--f', type=int, default=50, help='list of index of the target filters')
     parser.add_argument('--method', type=str, default='projection',
                         choices=('original', 'image', 'activation', 'projection'),
                         help='method used to explain the target filter')
@@ -153,10 +164,18 @@ if __name__ == "__main__":
                         help='number of words used to explain the target filter')
     parser.add_argument('--model-path', type=str, default='', help='path to load the target model')
     parser.add_argument('--thresh-path', type=str, help='path to save/load the thresholds')
-    parser.add_argument('--max-path', type=str, help='path to save/load the max activations of all examples')
+    parser.add_argument('--max-path', type=str, default='', 
+                        help='path to save/load the max activations of all examples')
+
+    # parser arguments because these need to be present for setup explainer
     parser.add_argument('--random', type=bool, default=False, 
                         help='Use randomly initialized models instead of pretrained feature extractors')
-
+    parser.add_argument('--model', type=str, default='resnet50', help='target network')
+    parser.add_argument('--classifier_name', type=str, default='fc', help='name of classifier layer')
+    parser.add_argument('--pretrain', type=str, default=None, help='path to the pretrained model')
+    parser.add_argument('--name', type=str, default='random_test', help='experiment name')
+    parser.add_argument('--mask_threshold', type=float, default=0.04, 
+                        help='path to save/load the thresholds')
 
     # if filter activation projection is used
     parser.add_argument('--s', type=int, default=5,
