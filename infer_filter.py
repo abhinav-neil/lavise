@@ -4,7 +4,10 @@ import argparse
 from image_datasets import *
 from model_loader import setup_explainer
 from torchtext.vocab import GloVe
-
+import torchvision
+import numpy as np
+import matplotlib.pyplot as plt
+from torchvision.utils import save_image
 
 def inference(args):
     f = args.f
@@ -91,7 +94,7 @@ def inference(args):
 
             # interpret the explainer's output with the specified method
 
-            # these goobers really gave the input wrong to their own function 
+            # these goobers really gave the input wrong to their own function
             # fun fact, it took way too long for me to figure this out
             # predict = explain(model, data_, method, activation, c, xf, threshold)
             predict = explain(method, model, data_, activation, c, xf, threshold)
@@ -109,6 +112,27 @@ def inference(args):
 
             weights += weight
 
+            # VISUALIZE
+            max_weights = np.zeros(3)
+            top_k_heatmaps = [0, 0, 0]
+            for idx, weight_max in enumerate(max_weights):
+                if weight > weight_max:
+                    max_weights[idx] = weights
+                    viz_img = data_.cpu().permute(0,2,3,1)
+                    viz_img * torch.tensor([0.229, 0.224, 0.225]) + torch.tensor([0.485, 0.456, 0.406])
+                    viz_img = np.array(viz_img.permute(0,3,1,2).squeeze(0))
+                    activation = xf/xf.max()
+                    activation = np.repeat(np.expand_dims(activation, 0), 3, axis=0)
+                    heatmap_vis = torch.tensor(0.6 * activation + (1-0.6) * viz_img)
+                    # print(type(heatmap_vis))
+                    # print(type(heatmap_vis.permute(1,2,0)))
+                    top_k_heatmaps[idx] = heatmap_vis
+                    #torchvision.utils.save_image(heatmap_vis, 'outputs/' + args.name + '/heatmaps.png')
+                    #filter_image_array = torchvision.utils.make_grid(top_k_heatmaps)
+                    #torchvision.utils.save_image(filter_image_array, 'outputs/' + args.name + '/filter_grid.png')
+                    #plt.imshow(heatmap_vis.transpose(1,2,0))
+                    #plt.show()
+
         with open('data/entities.txt') as file:
             all_labels = [line.rstrip() for line in file]
         (values, counts) = np.unique(filter_rank, return_counts=True)
@@ -121,12 +145,13 @@ def inference(args):
 
         end = time.time()
         print('Elasped Time: %f s' % (end - start))
-
+    filter_image_array = torchvision.utils.make_grid(top_k_heatmaps)
+    caption = "{}|f:{}|{}_{}_{}".format(args.method, f, sorted_predict_words[0], sorted_predict_words[1], sorted_predict_words[2])
+    torchvision.utils.save_image(filter_image_array, 'outputs/' + args.name + '/{}.png'.format(caption))
     return sorted_predict_words
 
 
 def explain(method, model, data_, activation, c, xf, threshold):
-    # this outside and remember to have the right order of inputs klojo
     img = data_.detach().cpu().numpy().squeeze()
     img = np.transpose(img, (1, 2, 0))
     if method == 'original':
@@ -168,17 +193,17 @@ if __name__ == "__main__":
                         help='number of words used to explain the target filter')
     parser.add_argument('--model-path', type=str, default='', help='path to load the target model')
     parser.add_argument('--thresh-path', type=str, help='path to save/load the thresholds')
-    parser.add_argument('--max-path', type=str, default='', 
+    parser.add_argument('--max-path', type=str, default='',
                         help='path to save/load the max activations of all examples')
 
     # parser arguments because these need to be present for setup explainer
-    parser.add_argument('--random', type=bool, default=False, 
+    parser.add_argument('--random', type=bool, default=False,
                         help='Use randomly initialized models instead of pretrained feature extractors')
     parser.add_argument('--model', type=str, default='resnet50', help='target network')
     parser.add_argument('--classifier_name', type=str, default='fc', help='name of classifier layer')
     parser.add_argument('--pretrain', type=str, default=None, help='path to the pretrained model')
     parser.add_argument('--name', type=str, default='random_test', help='experiment name')
-    parser.add_argument('--mask_threshold', type=float, default=0.04, 
+    parser.add_argument('--mask_threshold', type=float, default=0.04,
                         help='path to save/load the thresholds')
 
     # if filter activation projection is used
