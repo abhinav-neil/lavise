@@ -123,10 +123,10 @@ def inference(args):
                     viz_img = np.array(viz_img.permute(0,3,1,2).squeeze(0))
                     activation = xf/xf.max()
                     activation = np.repeat(np.expand_dims(activation, 0), 3, axis=0)
-                    heatmap_vis = torch.tensor(0.6 * activation + (1-0.6) * viz_img)
+                    heatmap_vis = 0.6 * activation + (1-0.6) * viz_img
                     # print(type(heatmap_vis))
                     # print(type(heatmap_vis.permute(1,2,0)))
-                    top_k_heatmaps[idx] = heatmap_vis
+                    top_k_heatmaps[idx] = torch.tensor(heatmap_vis)
                     #torchvision.utils.save_image(heatmap_vis, 'outputs/' + args.name + '/heatmaps.png')
                     #filter_image_array = torchvision.utils.make_grid(top_k_heatmaps)
                     #torchvision.utils.save_image(filter_image_array, 'outputs/' + args.name + '/filter_grid.png')
@@ -146,7 +146,10 @@ def inference(args):
         end = time.time()
         print('Elasped Time: %f s' % (end - start))
     filter_image_array = torchvision.utils.make_grid(top_k_heatmaps)
-    caption = "{}|f:{}|{}_{}_{}".format(args.method, f, sorted_predict_words[0], sorted_predict_words[1], sorted_predict_words[2])
+    # caption = "method:{}|f:{}|concept:{}".format(args.method, f, sorted_predict_words[0])
+    # caption = "method:{}_f:{}_concepts:".format(args.method, f)
+    caption = ''.join("{}_".format(k) for k in sorted_predict_words)
+
     torchvision.utils.save_image(filter_image_array, 'outputs/' + args.name + '/{}.png'.format(caption))
     return sorted_predict_words
 
