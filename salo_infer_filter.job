@@ -16,4 +16,4 @@ module load Anaconda3/2021.05
 # Activate your environment
 source activate fact23.2
 # Run your code
-srun python -u infer_filter.py --refer coco --name coco_3 --f 50
+srun python -u infer_filter.py --refer vg --unsupervised_concepts 0.3 --model resnet18 --name novel_concepts
