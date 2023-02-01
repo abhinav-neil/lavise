@@ -5,7 +5,7 @@ import torch.nn as nn
 
 def setup_explainer(settings, hook_fn=None, random_feature=False):
     if random_feature:
-        model = torchvision.models.__dict__[settings.model](pretrained=False)
+        model = torchvision.models.__dict__[settings.model](weights=None)
     # elif settings.pretrain is None:
     else:
         model = torchvision.models.__dict__[settings.model](pretrained=True)
@@ -23,7 +23,7 @@ def setup_explainer(settings, hook_fn=None, random_feature=False):
 
     target_index = list(model._modules).index(settings.layer)
     classifier_index = list(model._modules).index(settings.classifier_name)
-    feature_dim = list(model._modules[settings.layer]._modules.values())[-1].conv3.out_channels
+    # feature_dim = list(model._modules[settings.layer]._modules.values())[-1].conv3.out_channels
     for module_name in list(model._modules)[target_index + 1:classifier_index]:
         if module_name[-4:] == 'pool':
             continue
@@ -31,7 +31,7 @@ def setup_explainer(settings, hook_fn=None, random_feature=False):
             model._modules[module_name] = nn.Identity()
 
     if settings.model[:6] == 'resnet':
-        # feature_dim = model._modules[settings.classifier_name].in_features
+        feature_dim = model._modules[settings.classifier_name].in_features
         model._modules[settings.classifier_name] = nn.Sequential(
             nn.BatchNorm1d(feature_dim),
             nn.Dropout(0.1),
@@ -59,4 +59,5 @@ def setup_explainer(settings, hook_fn=None, random_feature=False):
 
     model.cuda()
     return model
+
 
