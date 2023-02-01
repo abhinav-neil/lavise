@@ -31,3 +31,8 @@ outputs/vsf_coco_resnet50_layer4_0.1/valid_vsf_coco_resnet50_layer4_0.1.txt
 outputs/vsf_coco_resnet50_layer4_0.1/ckpt_tmp.pth.tar
 outputs/vsf_coco_resnet50_layer4_0.1/ckpt_vsf_coco_resnet50_layer4_0.1.pth.tar
 salo.job
+outputs/coco_resnet18_layer4_ar=0.0_bs=512_epochs=5/best_model.pth.tar
+*.tar
+*.pt
+*.txt
+*.pt
