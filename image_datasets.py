@@ -35,7 +35,7 @@ data_transforms = {
 
 mask_transforms = transforms.Compose([
         transforms.ToPILImage(),
-        transforms.Resize(256, interpolation=Image.NEAREST),
+        transforms.Resize(256, interpolation=transforms.InterpolationMode.NEAREST),
         transforms.CenterCrop(224),
         transforms.ToTensor(),
     ])
@@ -44,9 +44,9 @@ mask_transforms = transforms.Compose([
 def mask_process(dim):
     mask_transform = transforms.Compose([
         transforms.ToPILImage(),
-        transforms.Resize(256, interpolation=Image.NEAREST),
+        transforms.Resize(256, interpolation=transforms.InterpolationMode.NEAREST),
         transforms.CenterCrop(224),
-        transforms.Resize(dim, interpolation=Image.NEAREST),
+        transforms.Resize(dim, interpolation=transforms.InterpolationMode.NEAREST),
         transforms.ToTensor(),
     ])
     return mask_transform
@@ -54,7 +54,7 @@ def mask_process(dim):
 
 class VisualGenome(Dataset):
 
-    def __init__(self, root_dir=None, transform=None, max_batch_size=64, mask_dim=7):
+    def __init__(self, root_dir='./data', transform=None, max_batch_size=64, mask_dim=7):
         self._root_dir = root_dir
         self._transform = transform
         self._samples = self._load_obj()
@@ -77,13 +77,14 @@ class VisualGenome(Dataset):
 
         targets = []
         masks = []
-        # print(f'The shape of targets/labels is {len(self._labels)}')
+        objs = []
         for obj in self._samples[idx]['objects']:
             target = torch.zeros((len(self._labels),))
             obj_name = obj['names'][0]
             if obj_name in self._labels:
                 label = self._labels[obj_name]
                 target[label] = 1
+            objs.append(obj_name)
             box_mask = torch.zeros(ori_img.size)
             xmin = obj['x']
             xmax = obj['x'] + obj['w']
@@ -96,11 +97,12 @@ class VisualGenome(Dataset):
             masks.append(box_mask)
           
         if len(targets)==0:
-            return img, torch.zeros((1, len(self._labels))), torch.zeros((1, self._mask_dim, self._mask_dim))
+            # print(f'No targets found for image id {self._samples[idx]["image_id"]}')
+            targets.append(torch.zeros(len(self._labels)))
+            masks.append(torch.zeros((1, self._mask_dim, self._mask_dim)))
+            objs.append('')
         
-        # print(f'The shape of targets after stacking is {torch.stack(targets).shape}')
-        print(f'The targets after stacking is {torch.stack(targets)}')
-        return img, torch.stack(targets), torch.stack(masks)
+        return img, torch.stack(targets), torch.stack(masks), objs
 
     def _load_obj(self):
         dataFile = os.path.join(self._root_dir, 'vg/vg_objects.json')
@@ -112,6 +114,17 @@ class VisualGenome(Dataset):
         dataFile = os.path.join(self._root_dir, 'vg/vg_labels.pkl')
         with open(dataFile, 'rb') as f:
             data = pickle.load(f)
+        #if self.obscure > 0:
+        #    obscured_slice = int(len(data)*self.obscure)
+        #    return data[obscured_slice:]
+
+        # print(type(data))
+        # print(len(data))
+        # print(len(data[int(len(data)*0.7):]))
+        # print(len(data[:int(len(data)*0.7)]))
+        # leave out 30% and check during inference if they know the label from the target dataset?
+        # or implement obscuring in train_explainer file, change the targets
+        # only uses validation so just remember when building the job file add args for partial dataset
         return data
 
 
