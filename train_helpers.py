@@ -47,7 +47,6 @@ class CSMRLoss(torch.nn.Module):
         loss = (1 - target_onehot) * (self.margin - tmp.unsqueeze(1) + false_terms)
         loss[torch.isnan(loss)] = 0.
         loss = torch.max(torch.tensor(0.).cuda(), loss.float())
-        # print(f'type of loss at : {loss.dtype}')
         loss = torch.sum(loss, dim=1)
         loss = torch.mean(loss)
         return loss
