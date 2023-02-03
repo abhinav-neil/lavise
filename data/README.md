@@ -3,7 +3,7 @@ by following the instructions on [Visual Genome Python Driver](https://github.co
 [COCO API WRAPPER](https://github.com/cocodataset/cocoapi/tree/master/PythonAPI/pycocotools). The wrappers and api are already installed
 in the environment. 
 
-To format the Visual Genome object, run the notebook.
+For preprocessing the Visual Genome objects, run the notebook.
 
 ## Install APIs
 Please replace the empty directories `pycocotools` and `visual_genome_python_driver` with
