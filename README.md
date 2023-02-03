@@ -14,17 +14,19 @@ in the environment.
 To format the Visual Genome object, run the notebook.
 
 # Running the model
-There are several job scripts to run the code. 
+There are two job scripts available to run the code. The train_explainer.job file trains with a resnet18 model with Visual Genome as reference dataset.
+The infer_filter.job file contains several experiments that test different parameters, most of which have been commented out. 
+
 
 Alternatively, you can manually run
-'''
-python train_explainer.py --refer <reference_dataset> --epochs <number_of_epochs> --name <run_name>
-'''
+```
+python train_explainer.py --refer <reference_dataset> --epochs <number_of_epochs> --anno_rate <annotation> --name <run_name> 
+```
 on your desktop to train the explainer, and
-'''
-python infer_filter.py --refer <reference_dataset> --name <run_name> 
-'''
-to visualize the filters. 
+```
+python infer_filter.py --refer <reference_dataset> --anno_rate <annotation> --name <run_name> 
+```
+to visualize the filters. Note that both parts should have matching hyperparameters. 
 
 # Original README of LaViSE page
 This is the official repository for paper "Explaining Deep Convolutional Neural Networks via Unsupervised 
