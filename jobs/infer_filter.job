@@ -1,0 +1,47 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu_titanrtx_shared_course
+#SBATCH --gres=gpu:1
+#SBATCH --job-name=InfelFilter
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=3
+#SBATCH --time=3:00:00
+#SBATCH --mem=32000M
+#SBATCH --output=outputs/job_outputs/infer_filter_vg_resnet18_layer4_ar=1.out
+
+module purge
+module load 2021
+module load Anaconda3/2021.05
+
+# Activate your environment
+source activate fact23
+
+# Run your code
+
+# exp 1: baseline
+# method=projection
+# layer=layer4
+# anno_rate=0.7
+
+# srun python -u infer_filter.py --refer vg --model resnet18 --layer $layer --anno_rate 0.7 --batch_size 256 --name vg_resnet18_${layer}_ar=${anno_rate} --method $method --viz_per_filter 1
+
+# exp 2: novel concepts (diff anno rates)
+# anno_rates='0.1 0.3 0.5 0.7'
+# for anno_rate in $anno_rates; do
+#     srun python -u infer_filter.py --refer vg --model resnet18 --layer layer4 --anno_rate $anno_rate --batch_size 256 --name vg_resnet18_layer4_ar=${anno_rate} --method projection --viz_per_filter 0
+# done
+
+# exp 3: different masking schemes
+# methods='projection original image activation'
+# for method in $methods; do
+#     srun python -u infer_filter.py --refer vg --model resnet18 --layer layer4 --anno_rate 1.0 --batch_size 256 --name vg_resnet18_layer4_ar=1.0 --method $method --viz_per_filter 1
+# done
+
+# exp 4: different layers
+layers='layer1 layer2 layer3'
+for layer in $layers; do
+    srun python -u infer_filter.py --refer vg --model resnet18 --layer $layer --anno_rate 1.0 --batch_size 64 --num_workers 12 --name vg_resnet18_${layer}_ar=1.0 --method projection --viz_per_filter 1
+done
+
+# exp 5: random initialization
+# srun python -u infer_filter.py --refer vg --model resnet18 --layer layer4 --anno_rate 1. --batch_size 256 --num_workers 8 --name vg_resnet18_layer4_ar1.0_random --method projection --viz_per_filter 0
