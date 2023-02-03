@@ -1,9 +1,6 @@
 __pycache__
 .vector_cache
 img/intro.png
-data/coco/coco_label_embedding.pth
-data/README.md
-data/vg/vg_labels.pkl
 *.jpg
 *.vsidx
 *.lock
@@ -11,7 +8,6 @@ data/vg/vg_labels.pkl
 .vs/ProjectSettings.json
 *.sqlite
 *.sqlite-journal
-*.json
 data/coco/annotations/deprecated-challenge2017/train-ids.txt
 data/coco/annotations/deprecated-challenge2017/val-ids.txt
 data/coco/annotations/stuff_train2017_pixelmaps.zip
