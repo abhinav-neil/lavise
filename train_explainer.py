@@ -25,8 +25,6 @@ def train_one_epoch(epoch, model, loss_fn, optimizer, train_loader, embeddings, 
     model.apply(set_bn_eval)
     for _, batch in enumerate(train_loader):
         batch_index += 1
-        # print(f'batch idx: {batch_index}')
-        # data, target, mask = torch.stack(batch[0], dim=1).cuda(), torch.stack(batch[1], dim=1).squeeze(0).cuda(), torch.stack(batch[2], dim=1).squeeze(0).cuda()
         data, targets, masks = batch[0].cuda(), batch[1].squeeze(0).cuda(), batch[2].squeeze(0).cuda()
         predict = data.clone()
         for name, module in model._modules.items():
@@ -34,11 +32,8 @@ def train_one_epoch(epoch, model, loss_fn, optimizer, train_loader, embeddings, 
                 predict = torch.flatten(predict, 1)
             predict = module(predict)
             if name==args.layer:
-                # if torch.sum(mask) > 0:
-                # print(f'predict shape: {predict.shape}, mask shape: {masks.shape}')
                 predict = predict * masks
-                # else:   
-                    # continue
+
         loss = loss_fn(predict, targets, embeddings, train_label_idx)
         if args.refer=='vg':
             loss /= predict.shape[0]    # normalize by number of masks/concepts
@@ -95,7 +90,6 @@ def validate(model, loss_fn, valid_loader, embeddings, train_label_idx, k=5):
     top_k_correct = 0.0
     for _, batch in enumerate(valid_loader):
         with torch.no_grad():
-            # data, target, mask = torch.stack(batch[0]).cuda(), torch.stack(batch[1]).squeeze(0).cuda(), torch.stack(batch[2]).squeeze(0).cuda()
             data, targets, masks = batch[0].cuda(), batch[1].squeeze(0).cuda(), batch[2].squeeze(0).cuda()
             predict = data.clone()
             for name, module in model._modules.items():
@@ -140,10 +134,8 @@ def main(args, train_rate=0.9):
     torch.cuda.empty_cache()
 
     model = setup_explainer(args, random_feature=args.random)
-    if args.model == 'densenet121':
-        parameters = model.classifier.parameters()
-    else:
-        parameters = model.fc.parameters()
+    
+    parameters = model.fc.parameters()
 
     model = model.cuda()
     if not args.name:
@@ -158,7 +150,7 @@ def main(args, train_rate=0.9):
     optimizer = torch.optim.Adam(parameters, lr=1e-4)
     scheduler = ReduceLROnPlateau(optimizer, verbose=True)
 
-    mask_dims = {'layer1': 56, 'layer2': 28, 'layer3': 14, 'layer4': 7, 'features':7, 'denselayer16':7}
+    mask_dims = {'layer1': 56, 'layer2': 28, 'layer3': 14, 'layer4': 7}
     if args.refer == 'vg':
         dataset = VisualGenome(root_dir='data', transform=data_transforms['val'], mask_dim=mask_dims[args.layer])
         datasets = {}
@@ -176,15 +168,6 @@ def main(args, train_rate=0.9):
         train_label_index = np.random.choice(range(len(label_index)), int(len(label_index) * args.anno_rate), replace=False)
         word_embeddings_vec = word_embedding.vectors[label_index].T.cuda()
     elif args.refer == 'coco':
-        # if you wanna take a subset of data
-        #datasets = {'val': MyCocoSegmentation(root='./data/coco/val2017',
-        #                                      annFile='./data/coco/annotations/instances_val2017.json',
-        #                                      transform=data_transforms['val'],
-        #                                      subset=250),
-        #            'train': MyCocoSegmentation(root='./data/coco/train2017',
-        #                                        annFile='./data/coco/annotations/instances_train2017.json',
-        #                                        transform=data_transforms['train'],
-        #                                        subset=5000)}
         datasets = {'val': MyCocoSegmentation(root='./data/coco/val2017',
                                               annFile='./data/coco/annotations/instances_val2017.json',
                                               transform=data_transforms['val']),
@@ -198,23 +181,6 @@ def main(args, train_rate=0.9):
         word_embeddings_vec = word_embedding.vectors[label_index].T.cuda()
     else:
         raise NotImplementedError
-    
-    # def collate_fn(batch):
-    #     # 
-    #     # if args.refer=='coco':
-    #         # return tuple(zip(*batch))
-    #         # return batch
-    #     # elif args.refer=='vg':
-    #     imgs, targets, masks = zip(*batch)
-
-    #     # Pad the targets and masks with zeros
-    #     targets = pad_sequence(targets, batch_first=True)
-    #     masks = pad_sequence(masks, batch_first=True)
-
-    #     # Stack the images together
-    #     imgs = torch.stack(imgs)
-
-    #     return imgs, targets, masks
 
     dataloaders = {x: torch.utils.data.DataLoader(datasets[x], batch_size=args.batch_size,
                                                   shuffle=True, num_workers=args.num_workers)
