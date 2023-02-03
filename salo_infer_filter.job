@@ -1,0 +1,19 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu_titanrtx_shared_course
+#SBATCH --gres=gpu:1
+#SBATCH --job-name=InferFilter
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=3
+#SBATCH --time=19:00:00
+#SBATCH --mem=32000M
+#SBATCH --output=salo_infer_filter%A.out
+
+module purge
+module load 2021
+module load Anaconda3/2021.05
+
+# Activate your environment
+source activate fact23.2
+# Run your code
+srun python -u infer_filter.py --refer vg --unsupervised_concepts 0.3 --model resnet18 --name novel_concepts

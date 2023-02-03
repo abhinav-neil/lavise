@@ -35,7 +35,7 @@ data_transforms = {
 
 mask_transforms = transforms.Compose([
         transforms.ToPILImage(),
-        transforms.Resize(256, interpolation=Image.NEAREST),
+        transforms.Resize(256, interpolation=transforms.InterpolationMode.NEAREST),
         transforms.CenterCrop(224),
         transforms.ToTensor(),
     ])
@@ -44,9 +44,9 @@ mask_transforms = transforms.Compose([
 def mask_process(dim):
     mask_transform = transforms.Compose([
         transforms.ToPILImage(),
-        transforms.Resize(256, interpolation=Image.NEAREST),
+        transforms.Resize(256, interpolation=transforms.InterpolationMode.NEAREST),
         transforms.CenterCrop(224),
-        transforms.Resize(dim, interpolation=Image.NEAREST),
+        transforms.Resize(dim, interpolation=transforms.InterpolationMode.NEAREST),
         transforms.ToTensor(),
     ])
     return mask_transform
@@ -54,7 +54,7 @@ def mask_process(dim):
 
 class VisualGenome(Dataset):
 
-    def __init__(self, root_dir=None, transform=None, max_batch_size=64, mask_dim=7):
+    def __init__(self, root_dir='./data', transform=None, max_batch_size=64, mask_dim=7):
         self._root_dir = root_dir
         self._transform = transform
         self._samples = self._load_obj()
@@ -77,27 +77,35 @@ class VisualGenome(Dataset):
 
         targets = []
         masks = []
+        objs = []
         for obj in self._samples[idx]['objects']:
             target = torch.zeros((len(self._labels),))
-            if obj in self._labels:
-                label = self._labels[obj]
+            obj_name = obj['names'][0]
+            if obj_name in self._labels:
+                label = self._labels[obj_name]
                 target[label] = 1
+            objs.append(obj_name)
             box_mask = torch.zeros(ori_img.size)
-            for box_anno in self._samples[idx]['objects'][obj]:
-                xmin = box_anno['x']
-                xmax = box_anno['x'] + box_anno['w']
-                ymin = box_anno['y']
-                ymax = box_anno['y'] + box_anno['h']
-                box_mask[ymin:ymax, xmin:xmax] = 1
+            xmin = obj['x']
+            xmax = obj['x'] + obj['w']
+            ymin = obj['y']
+            ymax = obj['y'] + obj['h']
+            box_mask[ymin:ymax, xmin:xmax] = 1
             targets.append(target)
             mask_transform = mask_process(self._mask_dim)
             box_mask = mask_transform(box_mask)
             masks.append(box_mask)
-
-        return img, torch.stack(targets), torch.stack(masks)
+          
+        if len(targets)==0:
+            # print(f'No targets found for image id {self._samples[idx]["image_id"]}')
+            targets.append(torch.zeros(len(self._labels)))
+            masks.append(torch.zeros((1, self._mask_dim, self._mask_dim)))
+            objs.append('')
+        
+        return img, torch.stack(targets), torch.stack(masks), objs
 
     def _load_obj(self):
-        dataFile = os.path.join(self._root_dir, 'vg/objects.json')
+        dataFile = os.path.join(self._root_dir, 'vg/vg_objects_clean.json')
         with open(dataFile) as f:
             data = json.load(f)
         return data
@@ -146,15 +154,11 @@ class MyCocoDetection(CocoDetection):
 
 
 class MyCocoSegmentation(CocoDetection):
-    def __init__(self, root, annFile, transform=None, target_transform=None, transforms=None, subset=None):
+    def __init__(self, root, annFile, transform=None, target_transform=None, transforms=None):
         super(CocoDetection, self).__init__(root, transforms, transform, target_transform)
         from pycocotools.coco import COCO
         self.coco = COCO(annFile)
-        ids = list(sorted(self.coco.anns.keys()))
-        if subset:
-            self.ids = ids[:subset]
-        else:
-            self.ids = ids
+        self.ids = list(sorted(self.coco.anns.keys()))
         self.dim = 7
 
     def __getitem__(self, index):
