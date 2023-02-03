@@ -14,7 +14,7 @@ from torch.utils.data.dataset import random_split
 from image_datasets import *
 from model_loader import setup_explainer
 
-warnings.filterwarnings("ignore")   # ignore stupid dataloader warnings
+warnings.filterwarnings("ignore")   # ignore dataloader warnings
 
 def inference(args):
     method = args.method
@@ -30,24 +30,18 @@ def inference(args):
     # prepare the reference dataset
     if args.refer == 'vg':
         dataset = VisualGenome(root_dir='./data', transform=data_transforms['val'])
-        # train_size = int(0.9 * len(dataset))
-        # test_size = len(dataset) - train_size
         torch.manual_seed(0)
-        # train_dataset, _ =  random_split(dataset, [train_size, test_size])
         with open("./data/vg/vg_labels.pkl", 'rb') as f:
             labels = pickle.load(f)
         label_index = []
         for label in labels:
             label_index.append(embedding_glove.stoi[label])
         labels = np.array(list(labels.keys()))
-        # print(labels.shape)
         np.random.seed(0)
         train_label_index = np.random.choice(range(len(label_index)), int(len(label_index) * args.anno_rate), replace=False)
-        # print(train_label_index.shape)
         annotated_concepts = set(labels)
         seen_concepts = set(labels[train_label_index])
         unseen_concepts = annotated_concepts - seen_concepts
-        # print(f'Concepts learned from training set: {seen_concepts}')
         print(f'the dataset has {len(annotated_concepts)} annotated concepts of which {len(seen_concepts)} are seen during training and {len(unseen_concepts)} are unseen\n')
         learned_concepts = set()
         novel_learned_concepts = set()
@@ -58,8 +52,6 @@ def inference(args):
                                   transform=data_transforms['val'])
         annotated_concepts = set([])
         unseen_concepts = set([])
-        #for _, t in dataset:
-        #    annotated_concepts |= set([ann['object'] for ann in t])]
         label_embedding_file = "./data/coco/coco_label_embedding.pth"
         label_embedding = torch.load(label_embedding_file)
         annotated_concepts = list(label_embedding['itos'].keys())
@@ -85,7 +77,6 @@ def inference(args):
             # Pad the targets and masks with zeros
             targets = pad_sequence(targets, batch_first=True)
             masks = pad_sequence(masks, batch_first=True)
-            # objs = pad_sequence(objs, batch_first=True)
             # Stack the images together
             imgs = torch.stack(imgs)
         return imgs, targets, masks, objs
@@ -118,10 +109,8 @@ def inference(args):
                 if name==args.layer:
                     break
             activations = x.cpu().detach().numpy()
-            # print(f'activations shape: {activations.shape}')
             if k == 0:
                 max_activations = np.zeros((activations.shape[1],len(dataset)))
-            # max_activations[:,k] = np.max(activations, axis=(-1, -2))
             max_activations[:,k*args.batch_size:(k+1)*args.batch_size] = np.max(activations, axis=(-1, -2)).T
         torch.save(max_activations, args.max_path)
         print(f'activations of all filters saved to {args.max_path}')
@@ -263,9 +252,6 @@ def inference(args):
                     filter_rank = np.concatenate((filter_rank, select_rank))
                 weights += weight
                 
-                # compute recall (ioU) between the predicted concepts and the ground truth concepts
-                # with open('data/entities.txt') as file:
-                    # all_labels = [line.rstrip() for line in file]
                 (values, counts) = np.unique(filter_rank, return_counts=True)
                 ind = np.argsort(-counts)
                 sorted_predict_words = []
@@ -277,11 +263,8 @@ def inference(args):
                 learned_concepts.update(sorted_predict_words)
                 results[filter]['predictions'][i] = sorted_predict_words
                 print(f'predicted concepts for filter {filter} and image {i}: {sorted_predict_words}')
-                # results[filter]['recall'][i] = len(ground_truths.intersection(set(sorted_predict_words))) / len(ground_truths)
-                # print(f'recall for filter {filter} and image {i}: {results[filter]["recall"][i]}')
 
                 for k in [5, 10, 20]:
-                    # if len(ground_truths) >= k:
                     results[filter][f'recall@{k}'][i] = len(ground_truths.intersection(set(sorted_predict_words[:k]))) / len(ground_truths)
                     print(f"recall@{k} for filter {filter} and image {i}: {results[filter][f'recall@{k}'][i]}")
                     results[filter][f'recall@{k} (unseen)'][i] = len(ground_truths_unseen.intersection(set(sorted_predict_words[:k]))) / len(ground_truths_unseen) if len(ground_truths_unseen) > 0 else np.nan
@@ -295,26 +278,16 @@ def inference(args):
                     heatmaps_dir = f'{output_path}/heatmaps'
                     if not os.path.exists(heatmaps_dir):
                         os.makedirs(heatmaps_dir)
-                    # max_weights = np.zeros(3)
-                    # top_k_heatmaps = [0, 0, 0]
-                    # for idx, weight_max in enumerate(max_weights):
-                        # if weight > weight_max:
-                            # max_weights[idx] = weights
                     viz_img = data_.cpu().permute(0,2,3,1)
-                    # viz_img /= viz_img.max()
-                    # viz_img = viz_img * torch.tensor([0.229, 0.224, 0.225]) + torch.tensor([0.485, 0.456, 0.406])
                     viz_img = np.array(viz_img.permute(0,3,1,2).squeeze(0))
                     activation = act_f_upsampled / act_f_upsampled.max()
                     activation = np.repeat(np.expand_dims(activation, 0), 3, axis=0)
                     heatmap_vis = torch.tensor(args.heatmap_opacity * activation + (1 - args.heatmap_opacity) * viz_img)
-                    # top_k_heatmaps[idx] = torch.tensor(heatmap_vis)
                     caption = f"f={filter}_img={i}_{'_'.join(['('+word+')' if word in novel_learned_concepts else word for word in sorted_predict_words[:words_per_caption]])}"
                     torchvision.utils.save_image(heatmap_vis, f'{heatmaps_dir}/{caption}.png' )
 
             end = time.time()
             print(f'\nelapsed time: {(end - start):.2f} seconds')
-            # results[filter]['recall']['avg'] = np.nanmean(list(results[filter]['recall'].values()))
-            # print(f'avg recall for filter {filter} is {results[filter]["recall"]["avg"]:.3f}')
             for k in [5, 10, 20]:
                 results[filter][f'recall@{k}']['avg'] = np.nanmean(list(results[filter][f'recall@{k}'].values()))
                 print(f'avg recall@{k} for filter {filter} is {results[filter][f"recall@{k}"]["avg"]:.3f}')
@@ -324,8 +297,7 @@ def inference(args):
     print('-' * 50)
     end_infer_loop = time.time()
     print(f'completed inference for {len(filters)} filters in {(end_infer_loop - start_infer_loop):.2f} seconds')    
-    # results['avg_recalls']['all'] = np.nanmean([results[filter]['recall']['avg'] for filter in filters])
-    # print(f'avg recall (IoU) for {len(filters)} filters is {results["avg_recalls"]["all"]:.3f}')
+
     for k in [5, 10, 20]:
         results[f'avg_recalls'][k] = np.nanmean([results[filter][f'recall@{k}']['avg'] for filter in filters])
         print(f'avg recall@{k} (IoU) for {len(filters)} filters is {results["avg_recalls"][k]:.3f}')
@@ -384,15 +356,11 @@ if __name__ == "__main__":
                         help='method used to explain the target filter')
     parser.add_argument('--word-embedding-dim', type=int, default=300)
     parser.add_argument('--refer', type=str, default='vg', choices=('vg', 'coco'), help='reference dataset')
-    # parser.add_argument('--num-output', type=int, default=10,
-                        # help='number of words used to explain the target filter')
     parser.add_argument('--save-dir', type=str, default='./outputs')
     parser.add_argument('--model-path', type=str, default='', help='path to load the target model')
     parser.add_argument('--thresh-path', type=str, help='path to save/load the thresholds')
     parser.add_argument('--max-path', type=str, default='',
                         help='path to save/load the max activations of all examples')
-
-    # parser arguments because these need to be present for setup explainer
     parser.add_argument('--random', type=bool, default=False,
                         help='Use randomly initialized models instead of pretrained feature extractors')
     parser.add_argument('--model', type=str, default='resnet50', help='target network')
@@ -409,7 +377,6 @@ if __name__ == "__main__":
                         help='number of top activated images used to explain each filter')
     parser.add_argument('--batch_size', type=int, default=1, help='batch size for dataloader')
     parser.add_argument('--num_workers', type=int, default=12, help='number of workers for dataloader')
-    # parser.add_argument('--visualize', type=bool, default=True, help='visualize the predictions')
     parser.add_argument('--viz_per_filter', type=int, default=1, help='number of images to visualize per filter')
     parser.add_argument('--heatmap_opacity', type=float, default=0.75, help='opacity of the heatmap')
     parser.add_argument('--anno_rate', type=float, default=1.0, help='percentage of reference dataset that was seen during training')
