@@ -1,0 +1,20 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu_titanrtx_shared_course
+#SBATCH --gres=gpu:1
+#SBATCH --job-name=TrainExp
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=3
+#SBATCH --time=10:00:00
+#SBATCH --mem=32000M
+#SBATCH --output=outputs/job_outputs/train_explainer_vg_resnet18_layer4_ar=1.0.out
+
+module purge
+module load 2021
+module load Anaconda3/2021.05
+
+# Activate your environment
+source activate fact23
+
+# Run your code
+srun python -u train_explainer.py --refer vg --model resnet18 --layer layer4 --anno-rate 1.0 --epochs 10 --batch-size 1 --random False
