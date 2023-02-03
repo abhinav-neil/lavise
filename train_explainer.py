@@ -6,8 +6,6 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data.dataset import random_split
 import time
 import warnings
-# from torch.nn.utils.rnn import pad_sequence
-
 from image_datasets import *
 from train_helpers import set_bn_eval, CSMRLoss
 from model_loader import setup_explainer
@@ -36,7 +34,7 @@ def train_one_epoch(epoch, model, loss_fn, optimizer, train_loader, embeddings, 
 
         loss = loss_fn(predict, targets, embeddings, train_label_idx)
         if args.refer=='vg':
-            loss /= predict.shape[0]    # normalize by number of masks/concepts
+            loss /= predict.shape[0] # normalize by number of masks/concepts
         
         if np.isnan(loss.item()):
             continue
@@ -111,8 +109,8 @@ def validate(model, loss_fn, valid_loader, embeddings, train_label_idx, k=5):
                 top_k_correct += (torch.sum(targets[i, pred]) > 0).detach().item() 
 
             loss = loss_fn(predict, targets, embeddings, train_label_idx).data.detach().item()
-            if args.refer=='vg':
-                loss /= predict.shape[0]
+            if args.refer=='vg': 
+                loss /= predict.shape[0] # normalize by number of masks/concepts
             if np.isnan(loss):
                 continue
             valid_loss_epoch += loss
