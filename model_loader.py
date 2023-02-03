@@ -20,8 +20,6 @@ def setup_explainer(settings, hook_fn=None, random_feature=False):
                 continue
             else:
                 model._modules[module_name] = nn.Identity()
-
-        # feature_dim = model._modules[settings.classifier_name].in_features
         feature_dim = list(model._modules[settings.layer]._modules.values())[-1].conv2.out_channels
         model._modules[settings.classifier_name] = nn.Sequential(
             nn.BatchNorm1d(feature_dim),
