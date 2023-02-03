@@ -32,3 +32,4 @@ outputs/coco_resnet18_layer4_ar=0.0_bs=512_epochs=5/best_model.pth.tar
 *.pt
 *.txt
 *.pt
+*.json
