@@ -105,7 +105,7 @@ class VisualGenome(Dataset):
         return img, torch.stack(targets), torch.stack(masks), objs
 
     def _load_obj(self):
-        dataFile = os.path.join(self._root_dir, 'vg/vg_objects.json')
+        dataFile = os.path.join(self._root_dir, 'vg/vg_objects_clean.json')
         with open(dataFile) as f:
             data = json.load(f)
         return data
@@ -114,17 +114,6 @@ class VisualGenome(Dataset):
         dataFile = os.path.join(self._root_dir, 'vg/vg_labels.pkl')
         with open(dataFile, 'rb') as f:
             data = pickle.load(f)
-        #if self.obscure > 0:
-        #    obscured_slice = int(len(data)*self.obscure)
-        #    return data[obscured_slice:]
-
-        # print(type(data))
-        # print(len(data))
-        # print(len(data[int(len(data)*0.7):]))
-        # print(len(data[:int(len(data)*0.7)]))
-        # leave out 30% and check during inference if they know the label from the target dataset?
-        # or implement obscuring in train_explainer file, change the targets
-        # only uses validation so just remember when building the job file add args for partial dataset
         return data
 
 
