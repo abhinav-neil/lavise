@@ -1,9 +1,6 @@
 __pycache__
 .vector_cache
 img/intro.png
-data/coco/coco_label_embedding.pth
-data/README.md
-data/vg/vg_labels.pkl
 *.jpg
 *.vsidx
 *.lock
@@ -11,22 +8,17 @@ data/vg/vg_labels.pkl
 .vs/ProjectSettings.json
 *.sqlite
 *.sqlite-journal
-*.json
-data/coco/annotations/deprecated-challenge2017/train-ids.txt
-data/coco/annotations/deprecated-challenge2017/val-ids.txt
-data/coco/annotations/stuff_train2017_pixelmaps.zip
-data/coco/annotations/stuff_val2017_pixelmaps.zip
-data/pycocotools/__init__.py
-data/pycocotools/_mask.pyx
-data/pycocotools/coco.py
-data/pycocotools/cocoeval.py
-data/pycocotools/mask.py
-*.png
-outputs/vsf_vg_resnet50_layer4_0.1/valid_vsf_vg_resnet50_layer4_0.1.txt
-.vs/FACT-AI-group18/v17/workspaceFileList.bin
-outputs/teehee/valid_teehee.txt
-outputs/test/ckpt_test.pth.tar
-outputs/test/valid_test.txt
-outputs/vsf_coco_resnet50_layer4_0.1/valid_vsf_coco_resnet50_layer4_0.1.txt
+# general
+__pycache__
+.vscode
+.vector_cache
 .DS_Store
 .gitignore
+
+# project specific
+*.png
+*.tar
+*.pt
+*.txt
+*.pt
+*.json
