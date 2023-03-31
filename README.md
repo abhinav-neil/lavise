@@ -1,5 +1,5 @@
-# FACT-AI-group18
-This is an attempt to reproduce the results and findings of [LaViSE](https://github.com/YuYang0901/LaViSE)
+# LaViSE Reproduction
+This is an attempt to reproduce the results and findings of [LaViSE](https://github.com/YuYang0901/LaViSE): Explaining Deep Convolutional Neural Networks via Latent Visual-Semantic Filter Attention.
 
 # Requirements
 ## Environment

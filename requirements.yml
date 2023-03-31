@@ -11,7 +11,6 @@ dependencies:
 - Pillow
 - matplotlib
 - torchtext
-# - opencv
 - pycocotools
 - pip:
     - visual-genome
