@@ -21,7 +21,7 @@ class Identity(nn.Module):
 
 
 class CSMRLoss(torch.nn.Module):
-    """Cosine Similarity Margin Ranking Loss
+    """Cosine Similarity Margin Ranking Loss 
 
     Shape:
         - output:
